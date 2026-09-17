@@ -49,7 +49,7 @@
 │   ├── backend/       #   app.py / database.py / iotda 桥接 / 告警推送
 │   ├── frontend/      #   Chart.js 双主题 UI (index.html + app.js + style.css)
 │   └── deploy/        #   EMQX/mosquitto 配置、docker-compose、部署文档
-├── 说明书/            # 12 篇中文文档: 架构/接线/故障排查/OTA/质量评估
+├── 说明书/            # 16 篇中文文档: 架构/接线/故障排查/OTA/质量评估/缺陷台账
 ├── hardware/          # 硬件资料
 └── .github/workflows/ # CI: 固件编译(ESP-IDF) + 后端语法 + 前端语法 三阶段冒烟
 ```
@@ -80,7 +80,7 @@ idf.py build && idf.py -p COM6 flash monitor
 
 ## 文档
 
-完整的 12 篇中文文档见 [说明书/](说明书/) —— 从硬件接线图到固件 bug 逐条排查记录，以及 [tools/dashboard/docs/](tools/dashboard/docs/) 下的云端部署指南。
+完整的 16 篇中文文档见 [说明书/](说明书/) —— 从硬件接线图到固件 bug 逐条排查记录，以及 [tools/dashboard/docs/](tools/dashboard/docs/) 下的云端部署指南。
 
 ## 说明
 
