@@ -1,0 +1,74 @@
+name: BMS CI 编译冒烟
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  firmware-build:
+    name: 固件编译 (ESP-IDF)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        idf_version: ["release-v5.2"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Generate placeholder mqtt2_client_key.h (device key is gitignored)
+        run: |
+          if [ ! -f components/bms_config/include/mqtt2_client_key.h ]; then
+            mkdir -p components/bms_config/include
+            printf '%s\n' \
+              '/* CI placeholder: real device private key is intentionally not in the' \
+              ' * repository (security). Compile-only stub; mTLS will fail at runtime. */' \
+              '#ifndef MQTT2_CLIENT_KEY_H_CI_STUB' \
+              '#define MQTT2_CLIENT_KEY_H_CI_STUB' \
+              'static const char mqtt2_client_key_pem[] =' \
+              '    "-----BEGIN PRIVATE KEY-----\nCI\n-----END PRIVATE KEY-----\n";' \
+              '#endif' > components/bms_config/include/mqtt2_client_key.h
+            echo "placeholder key generated"
+          fi
+
+      - name: Setup ESP-IDF (builds firmware inside the action container)
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: ${{ matrix.idf_version }}
+          target: esp32s3
+          path: "."
+
+  backend-check:
+    name: 后端 Python 语法 + JSON 校验
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: py_compile 后端
+        working-directory: tools/dashboard/backend
+        run: |
+          # 只编译已入库的后端模块(aging_*.py 为本地调试用, 被 gitignore, CI 环境不存在)
+          python -m py_compile app.py database.py iotda_client.py iotda_rules.py alert_push.py mqtt_client.py
+          python -c "import json;[json.load(open(f,encoding='utf-8')) for f in ['../frontend/static/manifest.json','iotda_product_model.json']];print('JSON OK')"
+
+  frontend-check:
+    name: 前端 JS 语法
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: node --check
+        working-directory: tools/dashboard/frontend
+        run: node --check static/app.js

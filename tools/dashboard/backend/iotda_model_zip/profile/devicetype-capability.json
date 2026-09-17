@@ -1,0 +1,1 @@
+{"devices": [{"manufacturerId": "BMS", "manufacturerName": "BMS", "protocolType": "MQTT", "deviceType": "BMS_DEVICE", "serviceTypeCapabilities": [{"serviceId": "BMS", "serviceType": "BMS", "option": "Mandatory"}]}]}

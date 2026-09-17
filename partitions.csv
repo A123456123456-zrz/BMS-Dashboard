@@ -1,0 +1,22 @@
+# ============================================================
+# BMS 项目分区表 (ESP32-S3, 16MB Flash)
+# 设计要点:
+#   1. OTA A/B 双分区, 支持固件回滚
+#   2. NVS 存储配置参数 (SSID/阈值/校准值)
+#   3. coredump 分区用于崩溃转储(便于事后分析)
+#   4. spiffs 分区预留(可选 Web 资源/字体)
+# 偏移计算:
+#   0x0000 ~ 0x8000  bootloader (32KB, 固定)
+#   0x8000 ~ 0x9000  分区表本身 (4KB, 固定)
+#   0x9000 ~ 0xF000  nvs + phy_init + otadata (24KB)
+#   0x10000 起为应用分区(64KB 对齐)
+# 总占用: 36KB + 7MB + 7MB + 1MB + 64KB ≈ 15.05MB (16MB Flash 内)
+# ============================================================
+# Name,     Type, SubType,  Offset,    Size,    Flags
+nvs,        data, nvs,      0x9000,    0x6000,
+phy_init,   data, phy,      0xf000,    0x1000,
+otadata,    data, ota,      0x10000,   0x2000,
+ota_0,      app,  ota_0,    0x20000,   0x700000,
+ota_1,      app,  ota_1,    0x720000,  0x700000,
+spiffs,     data, spiffs,   0xE20000,  0x100000,
+coredump,   data, coredump, 0xF20000,  0xE0000,

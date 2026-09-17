@@ -1,0 +1,5 @@
+# BSP 组件依赖
+# led_strip: 驱动 ESP32-S3-DevKitC-1 板载 WS2812 RGB LED (GPIO48)
+dependencies:
+  espressif/led_strip:
+    version: "~2.5.0"

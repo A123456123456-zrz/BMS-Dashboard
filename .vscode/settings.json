@@ -1,0 +1,26 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.extensionActivationMode": "always",
+  "idf.openOcdConfigs": [
+    "board/esp32s3-builtin.cfg"
+  ],
+  "idf.portWin": "COM6",
+  "idf.currentSetup": "D:\\v5.2.7\\esp-idf",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32s3"
+  },
+  "clangd.path": "C:\\Espressif\\tools\\esp-clang\\16.0.1-fe4f10a809\\esp-clang\\bin\\clangd.exe",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=${workspaceFolder}/build"
+  ],
+  "idf.flashType": "UART",
+  "python.analysis.extraPaths": [
+    "C:\\Users\\ASUS\\.kendryte\\k230_canmv_stubs\\8f620e570e90363678bd2fb9fdb22f4e16ba8fbf"
+  ],
+  "python.analysis.stubPath": "C:\\Users\\ASUS\\.kendryte\\k230_canmv_pylance\\395f245662f36fa2\\typings",
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingModuleSource": "none"
+  }
+}

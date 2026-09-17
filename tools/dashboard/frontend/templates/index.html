@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0A0F1C">
+<meta name="description" content="BMS 电池管理系统监控平台 - 实时数据/历史曲线/远程控制">
+<title>BMS 电池监控平台</title>
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<!-- 字体改为非阻塞加载: 国内访问 Google Fonts 常被墙, 同步<link>会拖慢首屏甚至白屏; 此处改用 preload+onload 异步应用, 加载失败则回退系统字体(CJF 早已用 PingFang/微软雅黑) -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"></noscript>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ asset_ver }}">
+</head>
+<body>
+
+<!-- ============ SIDEBAR (原型骨架) ============ -->
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="15" height="10" rx="2" stroke="#22D3EE" stroke-width="2"/><rect x="6" y="10" width="9" height="4" rx="1" fill="#22D3EE"/><rect x="19" y="10" width="2.5" height="4" rx="1" fill="#22D3EE"/></svg>
+    </div>
+    <div class="name">BMS 控制台<small>BATTERY SYS</small></div>
+  </div>
+  <div class="nav-label">监控</div>
+  <nav class="nav" id="nav" aria-label="主导航">
+    <a class="active" data-view="overview" onclick="switchView('overview')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>总览</a>
+    <a data-view="cells" onclick="switchView('cells')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="8" width="15" height="8" rx="2"/><rect x="6" y="10.5" width="8" height="3" rx="1" fill="currentColor"/><rect x="19" y="11" width="2" height="2" rx="1" fill="currentColor"/></svg>电芯监控</a>
+    <a data-view="trends" onclick="switchView('trends')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>趋势曲线</a>
+    <a data-view="control" onclick="switchView('control')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>控制 / 指令</a>
+    <div class="nav-label">管理</div>
+    <a data-view="alarms" onclick="switchView('alarms')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>告警中心<span class="badge" id="navAlarmBadge">0</span></a>
+    <a data-view="reports" onclick="switchView('reports')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>报表分析</a>
+    <a data-view="settings" onclick="switchView('settings')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>系统设置</a>
+  </nav>
+  <div class="side-foot">
+    <div class="row"><span>设备</span><b id="sfDev">--</b></div>
+    <div class="row"><span>固件</span><b id="sfFw">--</b></div>
+    <div class="row"><span>SOC</span><b id="sfSoc">--</b></div>
+    <div class="bar"><i id="sfBar" style="width:0%"></i></div>
+  </div>
+</aside>
+<div class="scrim" id="scrim" onclick="toggleMobileMenu()"></div>
+
+<!-- ============ 移动端底部 Tab 栏(类 App) ============ -->
+<nav class="mobile-nav" id="mobileNav" aria-label="移动端主导航">
+  <a data-view="overview" class="active" onclick="switchView('overview')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>总览</span>
+  </a>
+  <a data-view="cells" onclick="switchView('cells')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="8" width="15" height="8" rx="2"/><rect x="6" y="10.5" width="8" height="3" rx="1" fill="currentColor"/><rect x="19" y="11" width="2" height="2" rx="1" fill="currentColor"/></svg>
+    <span>电芯</span>
+  </a>
+  <a data-view="trends" onclick="switchView('trends')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+    <span>趋势</span>
+  </a>
+  <a data-view="control" onclick="switchView('control')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+    <span>控制</span>
+  </a>
+  <a data-view="alarms" onclick="switchView('alarms')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+    <span>告警</span>
+  </a>
+  <a data-view="reports" onclick="switchView('reports')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+    <span>报表</span>
+  </a>
+  <a data-view="settings" onclick="switchView('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>设置</span>
+  </a>
+  <!-- 2026-09-16 移动端功能补齐: 诊断/改密在 ≤768px 被隐藏, 手机端由此入口触达
+       (强制改密 403 弹框依赖 openChangePwdModal, 必须手机端可达) -->
+  <a id="mobDiagBtn" onclick="runDiag()" href="javascript:void(0)">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+    <span>诊断</span>
+  </a>
+  <a id="mobChangePwdBtn" onclick="openChangePwdModal()" href="javascript:void(0)">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    <span>改密</span>
+  </a>
+</nav>
+
+<!-- ============ MAIN ============ -->
+<div class="main" role="main" id="main">
+  <header class="topbar">
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="菜单">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </button>
+    <div class="page-title" id="pageTitle">总览<small>实时电池状态监控</small></div>
+    <div class="spacer"></div>
+    <select class="device-select" id="deviceSelect" onchange="onDeviceSwitch()">
+      <option>BMS-001 主电池组</option>
+      <option>BMS-002 备用电池组</option>
+      <option>BMS-003 充电电池组</option>
+    </select>
+    <span class="status-pill" title="当前自适应识别串数" style="border:1px solid var(--border-color);padding:3px 10px;border-radius:12px;font-size:12px">
+      🔋 <span id="topSeriesNum" style="font-weight:700;color:var(--accent-cyan)">--</span> 串
+    </span>
+    <div class="status-pill" id="connStatusPill">
+        <div class="status-dot online" id="connStatusDot"></div> <span id="connStatusText" style="display:inline-block;min-width:72px;text-align:center;white-space:nowrap">连接中...</span> · 延迟 <span id="latency" style="display:inline-block;min-width:52px;text-align:center;font-variant-numeric:tabular-nums">--</span>
+      <span id="crcStatus" style="display:inline-block;min-width:60px;text-align:center;font-size:10px;color:var(--text-muted);margin-left:8px;font-variant-numeric:tabular-nums" title="上报数据 CRC 完整性校验(固件 CRC8+CRC32)">CRC --</span>
+      <span id="nextQueryInfo" style="display:inline-block;min-width:118px;text-align:center;font-size:10px;color:var(--text-muted);margin-left:8px;font-variant-numeric:tabular-nums"></span>
+      <button id="refreshBtn" onclick="manualRefresh()" style="background:transparent;border:1px solid var(--border-color);color:var(--text-primary);padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer;margin-left:8px" title="立即刷新">🔄 刷新</button>
+      <button id="diagBtn" onclick="runDiag()" style="background:transparent;border:1px solid var(--border-color);color:var(--text-primary);padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer;margin-left:4px" title="一键诊断:设备状态/上报新鲜度/字段新旧">🔍 诊断</button>
+    </div>
+    <button id="changePwdBtn" onclick="openChangePwdModal()" style="background:transparent;border:1px solid var(--border-color);color:var(--text-secondary);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer" title="修改密码">🔑 改密</button>
+    <button id="notifyToggleBtn" onclick="toggleBrowserNotify()" style="background:transparent;border:1px solid var(--border-color);color:var(--text-secondary);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer" title="故障时弹出系统通知">🔔 通知:开</button>
+    <button id="themeToggleBtn" onclick="toggleTheme()" style="background:transparent;border:1px solid var(--border-color);color:var(--text-secondary);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer" title="切换日光/夜视显示主题">🌞 日光</button>
+    <div class="nav-user" title="点击登出" onclick="if(confirm('确定要登出吗?')){window.location.href='/logout'}" id="userRole">管理员</div>
+    <div class="avatar" id="avatar" title="">A</div>
+    <select class="device-select mob-device" id="deviceSelectMob" style="display:none;background:var(--bg-input);border:1px solid var(--border-color);color:var(--text-primary);padding:4px 8px;border-radius:6px;font-size:12px" onchange="document.getElementById('deviceSelect').value=this.value;onDeviceSwitch()">
+      <option>BMS-001</option>
+      <option>BMS-002</option>
+      <option>BMS-003</option>
+    </select>
+  </header>
+
+  <div class="views" id="contentScroll">
+
+    <!-- ========== 总览 overview ========== -->
+    <section class="view active" data-view="overview">
+      <div class="ov-eyebrow">核心电量</div>
+      <div class="grid kpis">
+        <div class="kpi-card">
+          <div class="kpi-label">总电压</div>
+          <div class="kpi-value" style="color:var(--accent-cyan)"><span id="voltInt">--</span>.<span id="voltDec"></span><span class="kpi-unit"> V</span></div>
+          <div class="kpi-change up"><span id="voltDelta">--</span> V vs 5min前</div>
+          <div class="kpi-icon">⚡</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="voltBar" style="width:0%;background:var(--accent-cyan)"></div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">总电流</div>
+          <div class="kpi-value" style="color:var(--accent-green)"><span id="currInt">--</span>.<span id="currDec"></span><span class="kpi-unit"> A</span></div>
+          <div class="kpi-change down"><span id="currDelta">--</span> A vs 5min前</div>
+          <div class="kpi-icon">🔌</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="currBar" style="width:0%;background:var(--accent-green)"></div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">SOC</div>
+          <div class="kpi-value" style="color:var(--accent-blue)"><span id="socVal">--</span><span class="kpi-unit"> %</span></div>
+          <div class="kpi-change up" id="socStatus">--</div>
+          <div class="kpi-icon">🔋</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="socBar" style="width:0%;background:var(--accent-blue)"></div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">SOH</div>
+          <div class="kpi-value" style="color:var(--accent-purple)"><span id="sohVal">--</span><span class="kpi-unit"> %</span></div>
+          <div class="kpi-change up" id="sohStatus">--</div>
+          <div class="kpi-icon">💧</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="sohBar" style="width:0%;background:var(--accent-purple)"></div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">瞬时功率</div>
+          <div class="kpi-value" style="color:var(--accent-yellow)"><span id="pwrVal">--</span><span class="kpi-unit"> W</span></div>
+          <div class="kpi-change up" id="pwrStatus">--</div>
+          <div class="kpi-icon">⚡</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="pwrBar" style="width:0%;background:var(--accent-yellow)"></div></div>
+        </div>
+      </div>
+
+      <div class="ov-eyebrow">通信链路</div>
+      <div class="conn-caption" style="margin-bottom:10px;font-size:11.5px;color:var(--text-muted)">
+        以下通信状态由 ESP32 设备实时上报的 <b>comm_status 位域</b> 驱动；仅旧固件/未注册云物模型属性时回退为推断，卡片明细会标注「设备自报」或「推断」。
+      </div>
+      <div class="grid conn-grid" style="margin-top:0">
+        <div class="kpi-card">
+          <div class="kpi-label">MQTT 链路</div>
+          <div class="kpi-value" id="mqttVal" style="color:var(--text-muted)">未接入</div>
+          <div class="kpi-change kpi-change--two-row" id="mqttDetail">
+            <div class="conn-row" id="mqttRow1">--</div>
+            <div class="conn-row" id="mqttRow2">--</div>
+          </div>
+          <div class="kpi-icon">📡</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">TLS 加密</div>
+          <div class="kpi-value" id="tlsVal" style="color:var(--text-muted)">未接入</div>
+          <div class="kpi-change" id="tlsDetail">未接入</div>
+          <div class="kpi-icon">🔒</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">设备影子</div>
+          <div class="kpi-value" id="shadowVal" style="color:var(--text-muted)">未接入</div>
+          <div class="kpi-change" id="shadowDetail">未接入</div>
+          <div class="kpi-icon">☁️</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">CAN总线</div>
+          <div class="kpi-value" id="canVal" style="color:var(--text-muted)">未接入</div>
+          <div class="kpi-change" id="canDetail">未接入</div>
+          <div class="kpi-icon">🔌</div>
+        </div>
+        <div class="kpi-card" id="rs485Card" title="Modbus RTU 从站 · 外部主站(EMS/上位机)轮询读取 · 默认 9600-8N1 / 站号1">
+          <div class="kpi-label">RS485 / Modbus 通信 <span class="kpi-badge" id="rs485Badge" style="display:none">⚠ 离线</span></div>
+          <div class="kpi-value" style="color:var(--text-muted)" id="rs485Val">—</div>
+          <div class="kpi-change" id="rs485Detail">—</div>
+          <div class="kpi-icon">🛰️</div>
+        </div>
+      </div>
+
+      <div class="ov-eyebrow">实时监测</div>
+      <div class="grid row2" style="margin-top:0">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">📈 实时电压/温度曲线
+              <span id="mainChartHint" style="margin-left:8px;font-size:11px;color:var(--text-muted);font-weight:400">总电压/温度</span>
+            </div>
+            <div class="chart-actions">
+              <button class="chart-tab active" onclick="setMainChartRange('1min', this)">1分钟</button>
+              <button class="chart-tab" onclick="setMainChartRange('5min', this)">5分钟</button>
+              <button class="chart-tab" onclick="setMainChartRange('1h', this)">1小时</button>
+              <button class="chart-tab" onclick="setMainChartRange('6h', this)">6小时</button>
+              <button class="chart-tab" onclick="setMainChartRange('24h', this)">24小时</button>
+              <button class="chart-tab" onclick="setMainChartRange('7d', this)">7天</button>
+            </div>
+          </div>
+          <div class="chart-body" style="min-height:240px"><canvas id="mainChart" role="img" aria-label="实时电压与温度曲线图"></canvas></div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0" id="cellSelector">
+            <button class="cell-select-btn active" onclick="setChartCell(-1)">全部</button>
+            <button class="cell-select-btn" onclick="setChartCell(0)">#1</button>
+            <button class="cell-select-btn" onclick="setChartCell(1)">#2</button>
+            <button class="cell-select-btn" onclick="setChartCell(2)">#3</button>
+            <button class="cell-select-btn" onclick="setChartCell(3)">#4</button>
+            <button class="cell-select-btn" onclick="setChartCell(4)">#5</button>
+            <button class="cell-select-btn" onclick="setChartCell(5)">#6</button>
+          </div>
+        </div>
+        <div class="right-stack">
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title">🔋 电池组健康度</div>
+            </div>
+            <div class="chart-body">
+              <div class="soh-ring-wrap">
+                <div class="soh-ring-main">
+                  <div class="soh-ring">
+                    <svg width="140" height="140" viewBox="0 0 160 160">
+                      <circle cx="80" cy="80" r="68" fill="none" stroke="var(--bg-input)" stroke-width="10"/>
+                      <circle cx="80" cy="80" r="68" fill="none" stroke="var(--accent-purple)" stroke-width="10" stroke-dasharray="427" stroke-dashoffset="30" stroke-linecap="round"/>
+                    </svg>
+                    <div class="soh-ring-center">
+                      <div class="soh-ring-val" style="color:var(--accent-purple)" id="sohRingVal">--</div>
+                      <div class="soh-ring-label">SOH</div>
+                    </div>
+                  </div>
+                  <div class="soh-ring-grade" id="sohHealthGrade">--</div>
+                </div>
+                <div class="soh-stats">
+                  <div class="soh-stat">
+                    <div class="soh-stat-val" style="color:var(--accent-green)" id="cycleCount">--</div>
+                    <div class="soh-stat-label">循环次数</div>
+                  </div>
+                  <div class="soh-stat">
+                    <div class="soh-stat-val" style="color:var(--accent-cyan)" id="avgTemp">--</div>
+                    <div class="soh-stat-label">平均温度</div>
+                  </div>
+                  <div class="soh-stat">
+                    <div class="soh-stat-val" style="color:var(--accent-yellow)" id="estTime">--</div>
+                    <div class="soh-stat-label">充满预计</div>
+                  </div>
+                  <div class="soh-stat">
+                    <div class="soh-stat-val" style="color:var(--accent-purple)" id="sohCapacity">--</div>
+                    <div class="soh-stat-label">容量估算</div>
+                  </div>
+                  <div class="soh-stat">
+                    <div class="soh-stat-val" style="color:var(--accent-blue)" id="cellVoltDiff">--</div>
+                    <div class="soh-stat-label">单体最大压差</div>
+                  </div>
+                  <div class="soh-stat">
+                    <div class="soh-stat-val" style="color:var(--accent-cyan)" id="tempDelta">--</div>
+                    <div class="soh-stat-label">温度极差</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ov-eyebrow">安全与快捷</div>
+          <div class="grid mini-grid">
+            <div class="kpi-card" id="insulationCard">
+              <div class="kpi-label">绝缘电阻 <span class="kpi-badge" id="insulationBadge" style="display:none">⚠ 绝缘报警</span></div>
+              <div class="kpi-value" style="color:var(--text-muted)" id="insulationVal">—<span class="kpi-unit"> Ω/V</span></div>
+              <div class="kpi-change" id="insulationDetail">—</div>
+              <div class="kpi-threshold">国标 GB/T 18384.1 · ≥100Ω/V 合格 · &lt;100 预警 · &lt;50 保护(自动切断主回路)</div>
+              <div class="kpi-icon">🛡️</div>
+            </div>
+            <div class="kpi-card" style="display:none">
+              <div class="kpi-label">预充状态</div>
+              <div class="kpi-value" style="color:var(--accent-blue)" id="prechargeStatus">--</div>
+              <div class="kpi-change" id="prechargeDetail">--</div>
+              <div class="kpi-icon">🔌</div>
+            </div>
+            <!-- 企业级导航: 整张卡片作为视图链接,通过 data-view 委托跳转,无需散落 onclick -->
+            <div class="kpi-card kpi-card-link" data-view="trends" role="link" tabindex="0" aria-label="查看 SOC-SOH 趋势（最近30天）">
+              <div class="kpi-label">SOC-SOH 趋势</div>
+              <div class="kpi-value" style="font-size:18px">📈 查看</div>
+              <div class="kpi-change up">最近30天</div>
+              <div class="kpi-icon">📊</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========== 电芯监控 cells ========== -->
+    <section class="view" data-view="cells">
+      <div class="mobile-viz" id="mobileViz" style="display:none;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px">📊 电芯电压总览</div>
+        <div class="battery-visual" id="mobileBatteryViz"></div>
+      </div>
+
+      <div class="grid row2">
+        <div class="table-card" style="grid-column:1/-1">
+          <div class="table-header">
+            <div class="table-title">🔋 单体电芯数据</div>
+            <div class="table-toolbar">
+              <input type="text" class="table-search" placeholder="搜索..." id="cellSearch" oninput="filterCells(this.value)">
+              <button class="command-btn" style="padding:5px 14px;font-size:12px" onclick="exportCSV()">📥 导出CSV</button>
+              <button class="command-btn primary" style="padding:5px 14px;font-size:12px" onclick="openBalanceModal()">均衡</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>电芯</th><th>电压</th><th>压差</th><th>内阻</th><th>温差</th><th>SOC</th><th>状态</th><th>指示</th>
+                </tr>
+              </thead>
+              <tbody id="cellTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">🔌 <span id="cellVoltTitle">单体电压曲线</span>
+              <span id="cellVoltModeTag" style="margin-left:8px;font-size:11px;color:var(--accent-cyan);font-weight:400">实时</span>
+            </div>
+            <div class="chart-actions">
+              <button class="chart-tab active" onclick="setCellVoltRange('1min', this)">实时·1分</button>
+              <button class="chart-tab" onclick="setCellVoltRange('5min', this)">实时·5分</button>
+              <span style="width:1px;height:18px;background:var(--border-color);display:inline-block;margin:0 4px"></span>
+              <button class="chart-tab" onclick="setCellVoltRange('1h', this)">1小时</button>
+              <button class="chart-tab" onclick="setCellVoltRange('6h', this)">6小时</button>
+              <button class="chart-tab" onclick="setCellVoltRange('24h', this)">24小时</button>
+              <button class="chart-tab" onclick="setCellVoltRange('7d', this)">7天</button>
+            </div>
+          </div>
+          <div class="chart-body" style="min-height:300px"><canvas id="cellVoltChart" role="img" aria-label="单体电芯电压曲线图"></canvas></div>
+          <div id="cellVoltEmptyHint" style="display:none;padding:8px 14px;font-size:12px;color:var(--accent-yellow);background:rgba(245,158,11,0.08);border-radius:6px;margin:0 14px 12px;"></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">🔍 3D 电池组视图</div>
+            <div class="chart-actions">
+              <button class="command-btn" style="padding:4px 10px;font-size:11px" onclick="setBattery3DView('front')">正面</button>
+              <button class="command-btn" style="padding:4px 10px;font-size:11px" onclick="setBattery3DView('side')">侧面</button>
+              <button class="command-btn" style="padding:4px 10px;font-size:11px" onclick="setBattery3DView('top')">俯视</button>
+              <button class="command-btn" style="padding:4px 10px;font-size:11px" onclick="setBattery3DView('iso')">等距</button>
+              <button class="command-btn active" id="b3dAutoBtn" style="padding:4px 10px;font-size:11px" onclick="toggleBattery3DAutoRotate()">自动旋转</button>
+            </div>
+          </div>
+          <div class="chart-body" style="flex:1">
+            <div id="battery3D" style="min-height:360px"></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========== 趋势曲线 trends ========== -->
+    <section class="view" data-view="trends">
+      <div class="chart-card" style="margin-bottom:16px">
+        <div class="chart-header">
+          <div class="chart-title">📈 历史趋势查询</div>
+          <div class="chart-actions">
+            <button class="chart-tab active" onclick="setHistoryRange('1h', this)">1小时</button>
+            <button class="chart-tab" onclick="setHistoryRange('6h', this)">6小时</button>
+            <button class="chart-tab" onclick="setHistoryRange('24h', this)">24小时</button>
+            <button class="chart-tab" onclick="setHistoryRange('7d', this)">7天</button>
+            <button class="chart-tab" onclick="exportRealCSV()">📥 导出CSV</button>
+            <button class="chart-tab" onclick="exportChartPNG('historyChart','历史趋势')">🖼 导出PNG</button>
+          </div>
+        </div>
+        <div class="chart-body" style="position:relative"><canvas id="historyChart" role="img" aria-label="历史趋势曲线图"></canvas><div id="historyEmptyHint" style="display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:82%;text-align:center;padding:10px 14px;border-radius:8px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.5);color:var(--text-secondary);font-size:13px;line-height:1.6"></div></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;border-top:1px solid var(--border-color)">
+          <span style="font-size:12px;color:var(--text-secondary)">自定义区间导出:</span>
+          <input type="date" class="threshold-input" id="csvStart" style="padding:4px 10px;font-size:12px" title="起始日期(含)">
+          <span style="color:var(--text-muted)">~</span>
+          <input type="date" class="threshold-input" id="csvEnd" style="padding:4px 10px;font-size:12px" title="结束日期(含)">
+          <button class="command-btn" style="padding:5px 14px;font-size:12px" onclick="exportCsvRange()">📥 按区间导出CSV</button>
+          <span style="font-size:11px;color:var(--text-muted)">（默认最近 7 天，可与上方快捷区间并存）</span>
+        </div>
+      </div>
+
+      <div class="chart-card" style="margin-bottom:16px">
+        <style>
+          .soh-v2-top{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+          .soh-v2-score{display:flex;flex-direction:column;align-items:center;min-width:92px}
+          .soh-v2-score .num{font-size:30px;font-weight:700;line-height:1;color:var(--accent-purple)}
+          .soh-v2-score .grade{margin-top:4px;font-size:11px;font-weight:600;padding:2px 9px;border-radius:10px}
+          .soh-v2-meta{flex:1;min-width:190px;font-size:12px;color:var(--text-secondary)}
+          .soh-v2-meta .rul{font-size:13px;font-weight:600;margin-bottom:5px}
+          .soh-v2-meta .model{font-size:11px;color:var(--text-muted)}
+          .soh-v2-factors{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+          .soh-v2-fac{display:flex;align-items:center;gap:8px;font-size:11px}
+          .soh-v2-fac .name{width:92px;color:var(--text-secondary);flex:none}
+          .soh-v2-fac .bar{flex:1;height:7px;background:var(--border-color);border-radius:4px;overflow:hidden}
+          .soh-v2-fac .bar>i{display:block;height:100%;border-radius:4px}
+          .soh-v2-fac .val{width:80px;text-align:right;color:var(--text-muted);flex:none}
+        </style>
+        <div class="chart-header">
+          <div class="chart-title">📉 电池健康度分析 <span style="font-size:11px;font-weight:400;color:var(--text-muted)">多因子评分 · 衰减预测 · RUL</span></div>
+          <div class="chart-actions">
+            <button class="chart-tab active" onclick="loadSohTrend('24h', this)">24小时</button>
+            <button class="chart-tab" onclick="loadSohTrend('7d', this)">7天</button>
+            <button class="chart-tab" onclick="loadSohTrend('30d', this)">30天</button>
+            <button class="chart-tab" onclick="exportChartPNG('sohTrendChart','电池健康度分析')">🖼 导出PNG</button>
+          </div>
+        </div>
+        <div class="chart-body"><canvas id="sohTrendChart" role="img" aria-label="SOH 衰减分析曲线图"></canvas></div>
+        <div style="padding:12px;border-top:1px solid var(--border-color)">
+          <div class="soh-v2-top">
+            <div class="soh-v2-score">
+              <div class="num" id="sohHealthScore">--</div>
+              <div class="grade" id="sohHealthGradeV2" style="background:rgba(139,92,246,0.12);color:var(--accent-purple)">--</div>
+            </div>
+            <div class="soh-v2-meta">
+              <div class="rul" id="sohRUL">剩余寿命(RUL): 计算中…</div>
+              <div class="model" id="sohModelBadge">预测模型: --</div>
+            </div>
+          </div>
+          <div class="soh-v2-factors" id="sohFactors"></div>
+          <div id="sohAnalysis" style="margin-top:10px;font-size:11px;color:var(--text-muted)">📊 基于历史数据多因子评估电池健康度与衰减趋势</div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">📈 SOC / SOH 趋势</div>
+          <div class="chart-actions">
+            <button class="chart-tab" onclick="loadTrendChart('day', this)">日</button>
+            <button class="chart-tab" onclick="loadTrendChart('week', this)">周</button>
+            <button class="chart-tab active" onclick="loadTrendChart('month', this)">月</button>
+            <button class="chart-tab" onclick="exportChartPNG('trendChart','SOC_SOH趋势')">🖼 导出PNG</button>
+          </div>
+        </div>
+        <div class="chart-body"><canvas id="trendChart" role="img" aria-label="SOC 与 SOH 趋势曲线图"></canvas></div>
+        <div style="text-align:right;padding:2px 14px 10px;color:var(--text-muted);font-size:11px" id="trendChartTip">加载中…</div>
+      </div>
+    </section>
+
+    <!-- ========== 控制 / 指令 control ========== -->
+    <section class="view" data-view="control">
+      <div class="grid row2">
+        <div class="control-card" id="controlPanel">
+          <div class="section-title">🎛️ 控制面板</div>
+          <div class="control-grid">
+            <div class="control-item">
+              <div class="ctrl-info">
+                <div class="control-label">充放电总开关</div>
+                <div class="control-desc">FET 总闸(原继电器语义,现为 BQ76952 FET 控制)</div>
+              </div>
+              <div class="ctrl-act">
+                <span class="switch-flag on">开</span>
+                <div class="toggle active" onclick="toggleSwitch(this,'MainRelay')"><span class="toggle-txt">ON</span></div>
+              </div>
+            </div>
+            <div class="control-item">
+              <div class="ctrl-info">
+                <div class="control-label">充电MOS</div>
+                <div class="control-desc">充电回路</div>
+              </div>
+              <div class="ctrl-act">
+                <span class="switch-flag on">开</span>
+                <div class="toggle active" onclick="toggleSwitch(this,'ChgMOS')"><span class="toggle-txt">ON</span></div>
+              </div>
+            </div>
+            <div class="control-item">
+              <div class="ctrl-info">
+                <div class="control-label">放电MOS</div>
+                <div class="control-desc">放电回路</div>
+              </div>
+              <div class="ctrl-act">
+                <span class="switch-flag on">开</span>
+                <div class="toggle active" onclick="toggleSwitch(this,'DischgMOS')"><span class="toggle-txt">ON</span></div>
+              </div>
+            </div>
+            <div class="control-item">
+              <div class="ctrl-info">
+                <div class="control-label">均衡控制</div>
+                <div class="control-desc">被动/主动模式统一管理</div>
+              </div>
+              <button class="cmd-icon-btn good" style="padding:6px 12px" onclick="scrollToBalance()"><span class="cmd-ico">⚖️</span><span class="cmd-lb"><b>均衡控制</b></span></button>
+            </div>
+          </div>
+          <div class="cmd-group">
+            <div class="cmd-group-title">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+              充放电控制
+            </div>
+            <div class="cmd-buttons">
+              <button class="cmd-icon-btn good" onclick="startCharging()"><span class="cmd-ico">▶</span><span class="cmd-lb"><b>开始充电</b><small>开启充电 MOS</small></span></button>
+              <button class="cmd-icon-btn" onclick="stopCharging()"><span class="cmd-ico">⏹</span><span class="cmd-lb"><b>停止充电</b><small>关闭充电 MOS</small></span></button>
+              <button class="cmd-icon-btn green" onclick="startDischarging()"><span class="cmd-ico">⏻</span><span class="cmd-lb"><b>开始放电</b><small>开启放电 MOS</small></span></button>
+              <button class="cmd-icon-btn warn" onclick="stopDischarging()"><span class="cmd-ico">⏸</span><span class="cmd-lb"><b>停止放电</b><small>关闭放电 MOS</small></span></button>
+            </div>
+          </div>
+          <div class="cmd-group">
+            <div class="cmd-group-title">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              设备维护
+            </div>
+            <div class="cmd-buttons">
+              <button class="cmd-icon-btn" onclick="rebootDevice()"><span class="cmd-ico">🔄</span><span class="cmd-lb"><b>重启设备</b><small>软复位 ESP32</small></span></button>
+              <button class="cmd-icon-btn" onclick="resetFadeCap()"><span class="cmd-ico">📏</span><span class="cmd-lb"><b>校准满电容量</b><small>重置容量基准</small></span></button>
+            </div>
+          </div>
+          <div class="command-panel">
+            <div style="font-size:12px;font-weight:600;margin-bottom:10px">✎ 指令下发</div>
+            <div class="command-row">
+              <input type="text" class="command-input" id="cmdInput" placeholder='{"cmd":"set_balance","enable":true,"mask":65535}' onkeydown="if(event.key==='Enter')sendCommand()">
+              <button class="command-btn primary" onclick="sendCommand()">发送</button>
+              <button class="command-btn danger" onclick="emergencyStop()">急停</button>
+            </div>
+            <div class="command-log" id="cmdLog">
+              <div><span class="log-info">[系统]</span> 系统就绪，等待数据...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">📋 运行日志</div>
+            <div class="table-toolbar">
+              <select class="device-select" style="padding:4px 10px;font-size:12px" id="logLevel" onchange="renderOperationLog()">
+                <option value="all">全部</option>
+                <option value="info">信息</option>
+                <option value="success">成功</option>
+                <option value="warn">预警</option>
+                <option value="error">告警</option>
+              </select>
+              <button class="command-btn" style="padding:5px 14px;font-size:12px" onclick="clearLogsDisplay()" title="仅清空屏幕显示，数据库记录不受影响">清空显示</button>
+            </div>
+          </div>
+          <div class="fault-export-range" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 12px 4px">
+            <span style="font-size:11px;color:var(--text-muted)">导出区间：</span>
+            <input type="datetime-local" id="opLogStart" class="form-input" style="font-size:11px;padding:3px 6px;background:var(--bg-card);color:inherit;border:1px solid var(--border);border-radius:6px">
+            <span style="font-size:11px;color:var(--text-muted)">→</span>
+            <input type="datetime-local" id="opLogEnd" class="form-input" style="font-size:11px;padding:3px 6px;background:var(--bg-card);color:inherit;border:1px solid var(--border);border-radius:6px">
+            <button class="command-btn primary" style="padding:5px 14px;font-size:12px" onclick="exportOperationLogServer()" title="由后端数据库按所选区间直接导出(持久化, 不受前端清空影响)">📥 导出CSV(服务器)</button>
+            <span style="font-size:10px;color:var(--text-muted)">留空=默认近7天</span>
+          </div>
+          <div class="op-log-list" id="logContainer"></div>
+        </div>
+      </div>
+
+      <div class="table-card" style="margin-top:16px">
+        <div class="table-header">
+          <div class="table-title">⚖️ 均衡控制</div>
+          <div>
+            <button class="command-btn" style="padding:5px 14px;font-size:12px" onclick="toggleBalance('off')">关闭</button>
+            <button class="command-btn primary" style="padding:5px 14px;font-size:12px" onclick="toggleBalance('passive')">被动均衡</button>
+            <button class="command-btn" style="padding:5px 14px;font-size:12px" onclick="toggleBalance('active')">主动均衡</button>
+          </div>
+        </div>
+        <div style="padding:16px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:12px">
+            <div style="font-size:11px;color:var(--text-secondary);text-align:center;padding:8px;background:var(--bg-secondary);border-radius:6px">均衡阈值 (mV)</div>
+            <div style="font-size:11px;color:var(--text-secondary);text-align:center;padding:8px;background:var(--bg-secondary);border-radius:6px">均衡起始SOC (%)</div>
+            <div style="font-size:11px;color:var(--text-secondary);text-align:center;padding:8px;background:var(--bg-secondary);border-radius:6px">均衡策略</div>
+            <div style="font-size:11px;color:var(--text-secondary);text-align:center;padding:8px;background:var(--bg-secondary);border-radius:6px">均衡状态</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">
+            <div style="font-size:14px;text-align:center;padding:8px">
+              <input type="number" class="threshold-input" id="balanceThreshold" value="5" min="1" max="50" style="text-align:center">
+            </div>
+            <div style="font-size:14px;text-align:center;padding:8px">
+              <input type="number" class="threshold-input" id="balanceStartSOC" value="85" min="50" max="100" style="text-align:center">
+            </div>
+            <div style="font-size:14px;text-align:center;padding:8px">
+              <select class="threshold-input" id="balanceStrategy">
+                  <option>电压差触发</option>
+                  <option>容量差触发</option>
+                  <option>定时均衡</option>
+              </select>
+            </div>
+            <div style="font-size:14px;text-align:center;padding:8px" id="balanceStatus">❌ 关闭</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 告警中心 alarms ========== -->
+    <section class="view" data-view="alarms">
+      <div class="alert-card" id="alertCard">
+        <div class="section-title">🔔 实时告警 <span class="badge badge-red" id="alertBadge">0</span>
+          <button class="alert-btn" style="font-size:11px" onclick="clearAllAlerts()">清空</button>
+          <button class="alert-btn" style="margin-left:auto;font-size:11px" onclick="ackAllAlerts()">全部确认</button>
+        </div>
+        <div class="alert-list" id="alertList">
+          <div class="alert-item">
+            <div class="alert-icon">🔴</div>
+            <div class="alert-body">
+              <div class="alert-msg">--</div>
+              <div class="alert-meta"><span>等待数据...</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert-card" id="faultHistoryCard" style="margin-top:16px">
+        <div class="section-title">🕒 历史故障记录
+          <span class="meta">设备累计上报的故障 · 刷新不丢失</span>
+          <button class="alert-btn" style="margin-left:auto;font-size:11px" onclick="loadFaultHistory()">↻ 刷新</button>
+        </div>
+        <div class="fault-export-range" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0 10px;padding:0 4px">
+          <span style="font-size:11px;color:var(--text-muted)">导出区间：</span>
+          <input type="datetime-local" id="faultStart" class="form-input" style="font-size:11px;padding:3px 6px;background:var(--bg-card);color:inherit;border:1px solid var(--border);border-radius:6px">
+          <span style="font-size:11px;color:var(--text-muted)">→</span>
+          <input type="datetime-local" id="faultEnd" class="form-input" style="font-size:11px;padding:3px 6px;background:var(--bg-card);color:inherit;border:1px solid var(--border);border-radius:6px">
+          <button class="alert-btn" style="font-size:11px" onclick="exportFaultHistoryServer()" title="由后端数据库按所选区间直接导出(审计级, 不受前端隐藏影响)">📥 导出CSV(服务器)</button>
+          <span style="font-size:10px;color:var(--text-muted)">留空=默认近30天</span>
+        </div>
+        <div class="alert-list" id="faultHistoryList" style="max-height:none;overflow:visible">
+          <div style="color:var(--text-muted);padding:20px;text-align:center">加载中...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 报表分析 reports ========== -->
+    <section class="view" data-view="reports">
+      <div class="table-card" id="reportCard">
+        <div class="table-header">
+          <div class="table-title">📊 报表生成 (日报 / 周报 / 月报 / 自定义)
+            <span id="reportRangeTag" style="margin-left:10px;font-size:11px;color:var(--text-muted);font-weight:400"></span>
+          </div>
+          <div>
+            <select class="device-select" id="reportType" style="padding:4px 10px;font-size:12px" onchange="onReportTypeChange()">
+              <option value="daily" selected>日报</option>
+              <option value="weekly">周报</option>
+              <option value="monthly">月报</option>
+              <option value="quarterly">季报</option>
+              <option value="yearly">年报</option>
+              <option value="custom">自定义范围</option>
+            </select>
+            <span id="reportDateWrap">
+              <input type="date" class="threshold-input" id="reportDate" style="padding:4px 10px;font-size:12px;width:140px">
+            </span>
+            <span id="reportCustomWrap" style="display:none">
+              <input type="date" class="threshold-input" id="reportStart" style="padding:4px 10px;font-size:12px;width:140px" title="起始(含)">
+              ~ <input type="date" class="threshold-input" id="reportEnd" style="padding:4px 10px;font-size:12px;width:140px" title="结束(含)">
+            </span>
+            <button class="command-btn primary" style="padding:5px 14px;font-size:12px" onclick="loadReport()">🔍 生成</button>
+            <button class="command-btn" style="padding:5px 10px;font-size:12px" onclick="setReportQuick('today')">今天</button>
+            <button class="command-btn" style="padding:5px 10px;font-size:12px" onclick="setReportQuick('yesterday')">昨天</button>
+            <button class="command-btn" style="padding:5px 10px;font-size:12px" onclick="setReportQuick('week')">本周</button>
+            <button class="command-btn" style="padding:5px 10px;font-size:12px" onclick="setReportQuick('month')">本月</button>
+            <button class="command-btn" style="padding:5px 10px;font-size:12px" onclick="setReportQuick('quarter')">本季</button>
+            <button class="command-btn" style="padding:5px 10px;font-size:12px" onclick="setReportQuick('year')">本年</button>
+            <button class="command-btn" style="padding:5px 14px;font-size:12px" onclick="exportReportCSV()">📥 CSV</button>
+            <button class="command-btn" style="padding:5px 14px;font-size:12px" onclick="exportReportPDF()">🖨 打印/PDF</button>
+            <button class="command-btn" style="padding:5px 14px;font-size:12px" onclick="exportReportRaw()">⚙ 原始CSV</button>
+          </div>
+        </div>
+        <div style="padding:16px">
+          <div id="reportSummary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:18px">
+            <div style="color:var(--text-muted);padding:20px;text-align:center;grid-column:1/-1">请点击「🔍 生成」按钮，或选择上方快捷日期生成报表。</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-size:12px;font-weight:600">📈 时段趋势 <span id="reportBucketHint" style="font-weight:400;color:var(--text-muted)"></span></div>
+            <div style="font-size:11px;color:var(--text-muted)" id="reportChartStatus"></div>
+          </div>
+          <div style="height:220px;margin-bottom:16px"><canvas id="reportChart" role="img" aria-label="报表时段趋势曲线图"></canvas></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-size:12px;font-weight:600">🚨 告警统计</div>
+          </div>
+          <div id="reportAlerts" style="font-size:12px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 系统设置 settings ========== -->
+    <section class="view" data-view="settings">
+      <div class="table-card" style="margin-bottom:16px">
+        <div class="table-header">
+          <div class="table-title">🔧 电池参数配置</div>
+          <button class="command-btn primary" style="padding:5px 14px;font-size:12px" onclick="saveBatteryParams()">💾 保存并下发</button>
+        </div>
+        <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">电池类型</div>
+            <select class="threshold-input" id="batType">
+              <option>磷酸铁锂 (LFP)</option>
+              <option>三元锂 (NCM)</option>
+              <option>钛酸锂 (LTO)</option>
+              <option>铅酸</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">额定容量 (Ah)</div>
+            <input type="number" class="threshold-input" id="batCapacity" value="100" step="1">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">标称电压 (V)</div>
+            <input type="number" class="threshold-input" id="batVoltage" value="22.2" step="0.1">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">串联节数 (1~32, 保存后设备实时切换算法)</div>
+            <input type="number" class="threshold-input" id="batSeries" value="16" step="1" min="1" max="16">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">最大充电电流 (A)</div>
+            <input type="number" class="threshold-input" id="maxChgCurrent" value="50" step="1">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">最大放电电流 (A)</div>
+            <input type="number" class="threshold-input" id="maxDsgCurrent" value="100" step="1">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">SOC估算算法</div>
+            <select class="threshold-input" id="socAlgo">
+              <option>MCC-EKF(默认最优)</option>
+              <option>AEKF双卡尔曼</option>
+              <option>纯安时积分</option>
+              <option>开路电压法</option>
+              <option>UKF无迹卡尔曼</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">采样频率 (Hz)</div>
+            <select class="threshold-input" id="sampleRate">
+              <option>1Hz</option>
+              <option>2Hz</option>
+              <option>5Hz</option>
+              <option>10Hz</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-card" style="margin-bottom:16px">
+        <div class="table-header">
+          <div class="table-title">⚙️ 告警阈值设置（默认与主控 bms_config.h 一致）</div>
+          <button class="command-btn primary" style="padding:5px 14px;font-size:12px" onclick="saveThresholds()">💾 保存并下发</button>
+          <button class="command-btn" style="padding:5px 14px;font-size:12px;margin-left:8px" onclick="resetThresholds()">↺ 恢复主控默认</button>
+        </div>
+        <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px" id="thresholdGroup">
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">单体过压保护 (V)</div><input type="number" class="threshold-input" id="thOverVolt" value="4.25" step="0.01" min="3.8" max="4.4"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">单体过压预警 (V)</div><input type="number" class="threshold-input" id="thOverVoltWarn" value="4.15" step="0.01" min="3.9" max="4.3"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">单体欠压保护 (V)</div><input type="number" class="threshold-input" id="thUnderVolt" value="2.80" step="0.01" min="2.5" max="3.1"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">单体欠压预警 (V)</div><input type="number" class="threshold-input" id="thUnderVoltWarn" value="2.90" step="0.01" min="2.7" max="3.3"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">单体压差预警 (mV)</div><input type="number" class="threshold-input" id="thDvWarn" value="100" step="5" min="10" max="500"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">放电过流保护 (A)</div><input type="number" class="threshold-input" id="thOverCurrent" value="10" step="0.5" min="1" max="30"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">放电过流预警 (A)</div><input type="number" class="threshold-input" id="thOverCurrentWarn" value="8" step="0.5" min="0.5" max="20"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">充电过流保护 (A)</div><input type="number" class="threshold-input" id="thChgOverCurrent" value="5" step="0.5" min="1" max="30"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">充电过流预警 (A)</div><input type="number" class="threshold-input" id="thChgOverCurrentWarn" value="4" step="0.5" min="0.5" max="20"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">最高温度保护 (°C)</div><input type="number" class="threshold-input" id="thMaxTemp" value="60" step="1" min="40" max="80"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">最高温度预警 (°C)</div><input type="number" class="threshold-input" id="thMaxTempWarn" value="50" step="1" min="35" max="70"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">低温保护 (°C)</div><input type="number" class="threshold-input" id="thMinTemp" value="-20" step="1" min="-30" max="10"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">低温预警 (°C)</div><input type="number" class="threshold-input" id="thMinTempWarn" value="-10" step="1" min="-20" max="20"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">电量过低预警 (%)</div><input type="number" class="threshold-input" id="thSocLowWarn" value="15" step="1" min="5" max="50"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">健康度衰减预警 (%)</div><input type="number" class="threshold-input" id="thSohLowWarn" value="80" step="1" min="30" max="95"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">均衡启动阈值 (mV)</div><input type="number" class="threshold-input" id="balanceThreshold" value="30" step="1" min="5" max="100"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">均衡停止阈值 (mV)</div><input type="number" class="threshold-input" id="balanceStopMv" value="10" step="1" min="1" max="50"></div>
+        </div>
+      </div>
+
+      <div class="table-card" style="margin-bottom:16px">
+        <div class="table-header">
+          <div class="table-title">🚀 OTA 远程固件升级</div>
+          <div>
+            <button class="command-btn" style="padding:5px 14px;font-size:12px" onclick="otaCheck()">🔍 检查更新</button>
+            <button class="command-btn primary" style="padding:5px 14px;font-size:12px" onclick="otaUpgrade()">⚡ 立即升级</button>
+          </div>
+        </div>
+        <div style="padding:16px;display:grid;grid-template-columns:1fr;gap:12px">
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">固件下载 URL (HTTPS,直链 .bin 文件)</div>
+            <input type="text" class="threshold-input" id="otaUrl" placeholder="https://bms0605.dpdns.org/api/ota/firmware.bin" style="width:100%;font-family:monospace;font-size:12px">
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:12px">
+            <div style="padding:8px;background:var(--bg-secondary);border-radius:6px">
+              <div style="color:var(--text-secondary);font-size:10px">当前固件版本</div>
+              <div style="color:var(--accent-cyan);font-weight:600" id="otaCurVer">1.0.0</div>
+            </div>
+            <div style="padding:8px;background:var(--bg-secondary);border-radius:6px">
+              <div style="color:var(--text-secondary);font-size:10px">目标版本</div>
+              <div style="color:var(--text-muted);font-weight:600" id="otaTargetVer">—</div>
+            </div>
+            <div style="padding:8px;background:var(--bg-secondary);border-radius:6px">
+              <div style="color:var(--text-secondary);font-size:10px">检查周期</div>
+              <div style="color:var(--accent-blue);font-weight:600">12 小时</div>
+            </div>
+          </div>
+
+          <div style="font-size:11px;color:var(--text-muted);background:var(--bg-secondary);border-radius:6px;padding:8px 10px" id="otaServerInfo">服务器固件: 加载中...</div>
+
+          <div class="ota-stepper" id="otaStepper" style="margin-top:14px">
+            <div class="ota-step" data-step="0"><div class="ota-step-dot">1</div><div class="ota-step-label">指令下发</div></div>
+            <div class="ota-step" data-step="1"><div class="ota-step-dot">2</div><div class="ota-step-label">设备下载</div></div>
+            <div class="ota-step" data-step="2"><div class="ota-step-dot">3</div><div class="ota-step-label">校验写入</div></div>
+            <div class="ota-step" data-step="3"><div class="ota-step-dot">4</div><div class="ota-step-label">重启验证</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12px">
+            <div style="color:var(--text-secondary);font-size:11px">升级状态</div>
+            <div style="color:var(--accent-green);font-weight:600" id="otaStatus">就绪</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-left:auto" id="otaCountdown"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);line-height:1.6;padding:8px;background:rgba(245,158,11,0.08);border-left:3px solid var(--accent-yellow);border-radius:4px">
+            ⚠️ <strong>升级流程:</strong> 1. 输入固件 URL → 2. 点击"立即升级" → 3. ESP32 下载 bin 文件 → 4. 写入 OTA 分区 → 5. SHA256 校验 → 6. 重启 → 7. 新固件启动后自动标记 valid。<br>
+            ⚠️ <strong>状态说明:</strong> 上方进度条实时显示「指令下发→设备下载→校验写入→重启验证」四阶段; ①与④为<strong>已确认态</strong>(云端回执/设备回联且版本匹配), ②③④为<strong>设备侧执行·前端推测</strong>(设备未上报中间进度)。设备回联且固件版本匹配目标才判定<strong>升级成功</strong>, 超 8 分钟未回联或版本未变则判定<strong>超时/失败</strong>。<br>
+            ⚠️ <strong>回滚机制:</strong> 若新固件启动失败,下次启动会自动回滚到上一版本。
+          </div>
+          <div id="otaPublishPanel" style="display:none;margin-top:12px;padding:12px;background:rgba(39,191,99,0.06);border-left:3px solid var(--accent-green);border-radius:4px">
+            <div style="font-size:12px;font-weight:600;color:var(--accent-green);margin-bottom:8px">📦 固件发布（管理员）</div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+              <!-- 2026-08-22 修复 v2: file input 透明覆盖按钮(opacity:0 全尺寸绝对定位)——
+                   点击"📁 选择文件"实际命中 input 本体, 浏览器原生必弹文件对话框, 无法被 JS 拦截.
+                   此前 label 包裹 display:none input 在部分环境点击不弹窗. -->
+              <span style="position:relative;display:inline-block">
+                <button class="command-btn primary" type="button" style="padding:6px 16px;font-size:12px;pointer-events:none">📁 选择文件</button>
+                <input type="file" id="otaPublishFile" accept=".bin" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2"
+                       onchange="var h=document.getElementById('otaPublishFileHint');if(h)h.textContent=this.files&&this.files.length?this.files[0].name:''">
+              </span>
+              <span id="otaPublishFileHint" style="font-size:11px;color:var(--text-muted);min-width:120px">未选择文件</span>
+              <input type="text" id="otaPublishVer" placeholder="版本号, 如 1.0.3" style="flex:1;min-width:120px;font-size:12px;padding:6px 8px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:6px;color:var(--text-primary)">
+              <button class="command-btn primary" style="padding:6px 16px;font-size:12px" onclick="otaPublish()">🚀 上传并发布</button>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:8px">上传 <code>bms.bin</code> 到服务器并写入 version.json; 设备下次检查(12h 自动 / 点"检查更新")即发现新版本自动升级。发布前请先在 bms_config.h 同步版本号并编译。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">🖥️ 设备管理
+            <span style="margin-left:8px;font-size:11px;color:var(--text-muted);font-weight:400">
+              参数与主控 <code style="background:var(--bg-input);padding:1px 6px;border-radius:3px">bms_config.h</code> 严格同步
+            </span>
+          </div>
+          <button class="command-btn primary" style="padding:5px 14px;font-size:12px" onclick="loadDevices()">🔄 刷新</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>设备名称</th><th>产品型号 / SN</th><th>设备 ID</th><th>部署区域</th><th>在线状态</th>
+                <th>配置(S×P)</th><th>电芯类型</th><th>容量(Ah)</th><th>电压范围(标/满/切)</th><th>当前SOC</th>
+                <th>循环次数</th><th>固件版本</th><th>主控芯片</th><th>厂商</th><th>最后上报</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="deviceTableBody">
+              <tr><td colspan="16" style="color:var(--text-muted);padding:20px;text-align:center">点击"刷新"加载设备列表</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========== 联动规则与推送 · 状态总览(只读) ========== -->
+      <div class="table-card" style="margin-top:16px">
+        <div class="table-header">
+          <div class="table-title">🛡 联动规则与推送 · 状态总览 <span style="font-size:11px;color:var(--text-muted);font-weight:400">（只读 · 全员可见）</span></div>
+          <button class="command-btn" style="padding:5px 14px;font-size:12px" onclick="refreshRulesPushStatus()">🔄 刷新</button>
+        </div>
+        <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px" id="rulesPushStatus">
+          <div style="color:var(--text-muted);padding:8px">加载中…</div>
+        </div>
+      </div>
+
+      <!-- ========== 联动规则配置(管理员可编辑) ========== -->
+      <div class="table-card" style="margin-top:16px">
+        <div class="table-header">
+          <div class="table-title">⚡ 联动规则配置 <span id="rulesEditTag" style="font-size:11px;color:var(--text-muted);font-weight:400"></span></div>
+          <button class="command-btn primary" style="padding:5px 14px;font-size:12px" id="rulesSaveBtn" onclick="saveRules()">💾 保存并下发</button>
+        </div>
+        <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px" id="rulesForm">
+          <div class="cfg-check-row" onclick="if(!event.target.closest||!event.target.closest('.switch')){var cb=document.getElementById('ruleEnabled');if(cb)cb.checked=!cb.checked;}"><span>启用联动规则</span><label class="switch" onclick="event.preventDefault();var cb=document.getElementById('ruleEnabled');if(cb)cb.checked=!cb.checked;"><input type="checkbox" id="ruleEnabled"><span class="slider"></span></label></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">低 SOC 阈值 (%)</div><input type="number" class="threshold-input" id="ruleLowSoc" min="0" max="100" step="1"></div>
+          <div class="cfg-check-row" onclick="if(!event.target.closest||!event.target.closest('.switch')){var cb=document.getElementById('ruleOvervolt');if(cb)cb.checked=!cb.checked;}"><span>单体过压保护</span><label class="switch" onclick="event.preventDefault();var cb=document.getElementById('ruleOvervolt');if(cb)cb.checked=!cb.checked;"><input type="checkbox" id="ruleOvervolt"><span class="slider"></span></label></div>
+          <div class="cfg-check-row" onclick="if(!event.target.closest||!event.target.closest('.switch')){var cb=document.getElementById('ruleTempProt');if(cb)cb.checked=!cb.checked;}"><span>温度保护</span><label class="switch" onclick="event.preventDefault();var cb=document.getElementById('ruleTempProt');if(cb)cb.checked=!cb.checked;"><input type="checkbox" id="ruleTempProt"><span class="slider"></span></label></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">触发消抖 (秒)</div><input type="number" class="threshold-input" id="ruleDebounce" min="0" max="3600" step="10"></div>
+        </div>
+        <div id="rulesMsg" style="padding:0 16px 14px;font-size:12px;min-height:16px"></div>
+      </div>
+
+      <!-- ========== 告警推送配置(管理员可编辑) ========== -->
+      <div class="table-card" style="margin-top:16px">
+        <div class="table-header">
+          <div class="table-title">📣 告警推送配置 <span id="pushEditTag" style="font-size:11px;color:var(--text-muted);font-weight:400"></span></div>
+          <button class="command-btn primary" style="padding:5px 14px;font-size:12px" id="pushSaveBtn" onclick="savePush()">💾 保存并下发</button>
+        </div>
+        <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px" id="pushForm">
+          <div style="grid-column:1/-1"><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">Webhook 地址（企业微信 / 钉钉 / 自定义）</div><input type="text" class="threshold-input" id="pushWebhook" placeholder="https://..." style="width:100%;font-family:monospace;font-size:12px"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">Server酱 SendKey</div><input type="text" class="threshold-input" id="pushSct" placeholder="SCTxxxx" style="width:100%"></div>
+          <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">PushPlus Token</div><input type="text" class="threshold-input" id="pushPp" placeholder="token" style="width:100%"></div>
+          <div class="cfg-check-row" onclick="if(!event.target.closest||!event.target.closest('.switch')){var cb=document.getElementById('pushOnline');if(cb)cb.checked=!cb.checked;}"><span>设备上线 / 离线通知</span><label class="switch" onclick="event.preventDefault();var cb=document.getElementById('pushOnline');if(cb)cb.checked=!cb.checked;"><input type="checkbox" id="pushOnline"><span class="slider"></span></label></div>
+        </div>
+        <div id="pushMsg" style="padding:0 16px 14px;font-size:12px;min-height:16px"></div>
+      </div>
+
+      <!-- ========== 2026-08-22 用户管理(仅管理员可见) → 移到审计日志上方 ========== -->
+      <div class="table-card" style="margin-top:16px" id="userMgmtCard">
+        <div class="table-header">
+          <div class="table-title">👥 用户管理 <span style="font-size:11px;color:var(--text-muted);font-weight:400">（仅管理员可见/操作）</span></div>
+          <div class="table-toolbar">
+            <button class="command-btn primary" style="padding:5px 14px;font-size:12px" onclick="openAddUserModal()">➕ 新增用户</button>
+            <button class="command-btn primary" style="padding:5px 14px;font-size:12px" onclick="loadUsers()">🔄 刷新</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>用户名</th><th>显示名</th><th>角色</th><th>创建时间</th><th>最近登录</th><th style="width:180px">操作</th></tr></thead>
+            <tbody id="userTableBody"><tr><td colspan="7" style="color:var(--text-muted);padding:20px;text-align:center">点击「刷新」加载用户列表</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========== 操作审计日志 ========== -->
+      <div class="table-card" style="margin-top:16px">
+        <div class="table-header">
+          <div class="table-title">📜 操作审计日志 <span style="font-size:11px;color:var(--text-muted);font-weight:400">（记录所有控制指令下发）</span></div>
+          <div class="table-toolbar">
+            <select class="device-select" id="auditLimit" style="padding:4px 10px;font-size:12px" onchange="loadAuditLog()">
+              <option value="50">最近 50 条</option>
+              <option value="100" selected>最近 100 条</option>
+              <option value="200">最近 200 条</option>
+              <option value="500">最近 500 条</option>
+            </select>
+            <input type="text" class="table-search" id="auditFilter" placeholder="操作过滤…" oninput="loadAuditLog()">
+            <button class="command-btn primary" style="padding:5px 14px;font-size:12px" onclick="loadAuditLog()">🔄 刷新</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>时间</th><th>操作</th><th>来源</th><th>结果</th><th>参数</th></tr></thead>
+            <tbody id="auditLogBody"><tr><td colspan="5" style="color:var(--text-muted);padding:20px;text-align:center">点击「刷新」加载审计日志</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div style="height:20px"></div>
+  </div>
+
+  <!-- ===== FOOTER BAR (status) ===== -->
+  <footer class="footer-bar">
+    <div class="footer-item" id="footerDeviceStatus"><div class="status-dot" id="footerDevDot" style="width:6px;height:6px;background:var(--accent-red)"></div> 设备离线</div>
+    <div class="footer-item" id="footerMqtt">📡 云端: 检查中</div>
+    <div class="footer-item" id="footerDbCount">📊 记录: 0</div>
+    <div class="footer-item">🔐 TLS 1.3</div>
+    <div class="footer-item">📈 刷新率: ~10s</div>
+    <div class="footer-spacer"></div>
+    <div class="footer-item">v2.1.0</div>
+    <div class="footer-item">Cloudflare 隧道</div>
+    <div class="footer-item" id="jsVersionBadge" title="前端 JS 版本标识(用于排查缓存问题)">JS v{{ asset_ver }}</div>
+  </footer>
+</div>
+
+<!-- ===== BALANCE MODAL ===== -->
+<div class="modal-overlay" id="balanceModal">
+  <div class="modal">
+    <div class="modal-title">⚖️ 均衡控制</div>
+    <div class="modal-row">
+      <div class="modal-label">均衡模式</div>
+      <select class="modal-input" id="balanceMode">
+        <option>被动均衡 (电阻放电)</option>
+        <option>主动均衡 (电感转移)</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">均衡阈值 (V)</div>
+      <input type="number" class="modal-input" id="balanceThresholdModal" value="0.02" step="0.01" min="0.005" max="0.1">
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">均衡电流 (A)</div>
+      <input type="number" class="modal-input" id="balanceCurrent" value="0.1" step="0.05" min="0.05" max="1.0">
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn" onclick="closeBalanceModal()">取消</button>
+      <button class="modal-btn primary" onclick="sendBalanceCmd()">确认下发</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DIAG MODAL ===== -->
+<div class="modal-overlay" id="diagModal">
+  <div class="modal diag-modal">
+    <div class="modal-title">🔍 一键诊断 <span id="diagHealthBadge"></span></div>
+    <div class="diag-body" id="diagBody">
+      <div class="diag-loading" id="diagLoading">⏳ 诊断中...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn primary" id="diagExportBtn" onclick="exportDiagTxt()" style="display:none" title="将诊断结果保存为 TXT 日志文件">📥 导出 TXT</button>
+      <button class="modal-btn primary" onclick="closeDiagModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHANGE PASSWORD MODAL ===== -->
+<div class="modal-overlay" id="changePwdModal">
+  <div class="modal">
+    <div class="modal-title">🔑 修改密码</div>
+    <div class="modal-row">
+      <div class="modal-label">当前用户</div>
+      <div class="modal-input" id="changePwdUser" style="background:var(--bg-input);padding:8px 10px;border-radius:6px;font-size:13px">--</div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">旧密码</div>
+      <input type="password" class="modal-input" id="changePwdOld" placeholder="请输入当前密码">
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">新密码</div>
+      <input type="password" class="modal-input" id="changePwdNew" placeholder="至少 8 位">
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">确认新密码</div>
+      <input type="password" class="modal-input" id="changePwdNew2" placeholder="再次输入新密码">
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn" onclick="closeChangePwdModal()">取消</button>
+      <button class="modal-btn primary" onclick="submitChangePwd()">确认修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 2026-08-21 新增用户弹窗(管理员) ===== -->
+<div class="modal-overlay" id="addUserModal">
+  <div class="modal">
+    <div class="modal-title">➕ 新增用户</div>
+    <div class="modal-row">
+      <div class="modal-label">用户名</div>
+      <input type="text" class="modal-input" id="addUserUsername" placeholder="至少 3 个字符">
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">密码</div>
+      <input type="password" class="modal-input" id="addUserPassword" placeholder="至少 8 位">
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">角色</div>
+      <select class="modal-input" id="addUserRole">
+        <option value="viewer">只读用户 (viewer)</option>
+        <option value="operator">操作员 (operator)</option>
+        <option value="admin">管理员 (admin)</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">显示名</div>
+      <input type="text" class="modal-input" id="addUserDisplay" placeholder="可选">
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn" onclick="closeAddUserModal()">取消</button>
+      <button class="modal-btn primary" onclick="submitAddUser()">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}?v=1786165800"></script>
+<script src="{{ url_for('static', filename='vendor/socket.io.min.js') }}?v=1786165800"></script>
+<script src="{{ url_for('static', filename='vendor/three.min.js') }}?v=20260812"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v={{ asset_ver }}"></script>
+
+</body>
+</html>

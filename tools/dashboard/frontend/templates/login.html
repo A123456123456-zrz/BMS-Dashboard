@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="BMS 智能电池监控系统 - 登录">
+    <title>BMS 监控系统 - 登录</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0b1220 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* 刘海屏安全区 + 最小留白 */
+            padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+        }
+
+        /* 移动优先: 流体宽度 + 安全内边距, 默认即小屏友好 */
+        .login-card {
+            background: rgba(30, 41, 59, 0.82);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(6, 182, 212, 0.22);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            padding: clamp(28px, 7vw, 44px) clamp(22px, 6vw, 40px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: clamp(22px, 5vw, 32px);
+        }
+        .login-icon {
+            font-size: clamp(40px, 11vw, 52px);
+            margin-bottom: 12px;
+            line-height: 1;
+        }
+        .login-title {
+            color: #f1f5f9;
+            font-size: clamp(19px, 5.2vw, 23px);
+            font-weight: 700;
+            letter-spacing: .3px;
+        }
+        .login-subtitle {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .form-group { margin-bottom: 18px; }
+        .form-label {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 500;
+        }
+        /* 16px 字号: 阻止 iOS 聚焦时自动放大; 48px 高度满足触控热区 */
+        .form-input {
+            width: 100%;
+            min-height: 50px;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            border-radius: 12px;
+            color: #f1f5f9;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input::placeholder { color: #475569; }
+        .form-input:focus {
+            border-color: #06b6d4;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+        }
+        .form-input:focus-visible {
+            outline: 2px solid #22d3ee;
+            outline-offset: 2px;
+        }
+
+        .login-btn {
+            width: 100%;
+            min-height: 52px;
+            margin-top: 4px;
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s;
+        }
+        .login-btn:hover { box-shadow: 0 6px 24px rgba(6, 182, 212, 0.4); }
+        .login-btn:active { transform: scale(0.98); }
+        .login-btn:focus-visible { outline: 2px solid #22d3ee; outline-offset: 3px; }
+        .login-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+        .error-msg {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+            padding: 11px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .login-footer {
+            text-align: center;
+            color: #475569;
+            font-size: 11px;
+            margin-top: 22px;
+        }
+
+        /* 极小屏进一步收紧, 避免横向溢出 */
+        @media (max-width: 360px) {
+            .login-card { border-radius: 16px; }
+            .form-input { min-height: 46px; }
+            .login-btn { min-height: 48px; letter-spacing: 1px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .login-btn, .form-input { transition: none; }
+            .login-btn:hover { box-shadow: none; }
+            .login-btn:active { transform: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-icon">🔋</div>
+            <div class="login-title">智能电池监控系统</div>
+            <div class="login-subtitle">BMS Cloud Dashboard</div>
+        </div>
+        {% if error %}
+        <div class="error-msg" role="alert">{{ error }}</div>
+        {% endif %}
+        <form method="POST" action="/login" autocomplete="on" id="loginForm">
+            <div class="form-group">
+                <label class="form-label" for="username">用户名</label>
+                <input type="text" class="form-input" id="username" name="username"
+                       placeholder="请输入用户名" autocomplete="username"
+                       autocapitalize="off" autocorrect="off" spellcheck="false"
+                       autofocus required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="password">密码</label>
+                <input type="password" class="form-input" id="password" name="password"
+                       placeholder="请输入登录密码" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="login-btn" id="loginBtn">登 录</button>
+        </form>
+        <div class="login-footer">BMS System v2.0 &copy; 2026</div>
+    </div>
+    <script>
+        // 提交时禁用按钮, 避免移动端重复点击; 不破坏键盘回车提交
+        (function () {
+            var form = document.getElementById('loginForm');
+            var btn = document.getElementById('loginBtn');
+            if (form && btn) {
+                form.addEventListener('submit', function () {
+                    btn.disabled = true;
+                    btn.textContent = '登 录 中…';
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

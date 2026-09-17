@@ -1,0 +1,11 @@
+# BMS Dashboard 依赖
+# Python 3.8+
+
+flask==3.0.0
+flask-socketio==5.3.6
+paho-mqtt==1.6.1
+eventlet==0.35.2
+python-engineio==4.9.0
+python-socketio==5.11.0
+huaweicloudsdkcore==3.1.138
+huaweicloudsdkiotda==3.1.138

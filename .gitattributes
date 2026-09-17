@@ -1,0 +1,24 @@
+# 统一行尾, 避免 Windows/Linux 混用导致每次提交都 diff 行尾
+* text=auto eol=lf
+
+# 源码显式声明为文本
+*.c    text
+*.h    text
+*.py   text
+*.js   text
+*.json text
+*.md   text
+*.yml  text
+*.txt  text
+*.csv  text
+
+# Windows 批处理必须 CRLF 才能正确执行
+*.bat  text eol=crlf
+
+# 二进制: 不转换, 不 diff
+*.bin   binary
+*.elf   binary
+*.map   binary
+*.db    binary
+*.png   binary
+*.jpg   binary

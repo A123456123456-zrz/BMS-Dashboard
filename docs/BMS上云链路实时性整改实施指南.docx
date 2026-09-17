@@ -1,0 +1,48 @@
+BMS上云链路实时性整改实施指南
+
+=== 1. 背景 ===
+设备断电/断网后，前端网页仍显示在线并持续刷新数据，影响用户体验和系统健壮性。需实现：
+1. 设备断电/断网 → 前端秒级转离线（含顶部状态点/通信卡片/曲线灰线）
+2. 同步推送企业微信通知
+
+=== 2. 问题定位 ===
+- 固件未配置 LWT 遗嘱，断电时 EMQX 依赖 keepalive 60s 才发现
+- 消费腿 _handle_status 未处理离线遗嘱 → 状态未标记为离线
+- 前端未监听 bms_status 事件，无法快速响应离线状态
+
+=== 3. 解决方案 ===
+
+**3.1 固件端**
+- EMQX 通道 mqtt2 配置 LWT 遗嘱：
+  ```
+  .last_will = {
+      .topic = bms/<device_id>/status,
+      .msg = {"device_online":false,"no_data":true,"lwt":true}
+  }
+  ```
+- EMQX keepalive 从 60s 缩短到 15s，断电发现时间从 60s→30s
+
+**3.2 后端/前端**
+- 消费腿 _handle_status 处理离线遗嘱：
+  - 立即标记设备离线（供 /api/status 的 emqx_age_ms 立即判离线）
+  - 发送 bms_status 事件，触发企微推送
+- 前端监听 bms_status 事件，收到离线标志 → 秒级转离线 + 拉取 /api/status 强制刷新
+
+**3.3 企微推送**
+- 确认 BMS_ALERT_ONLINE_NOTIFY 字段已启用（默认开启）
+- AlertPusher.notify_online_change(...) 离线推送已集成
+
+=== 4. 验证结果 ===
+- 固件编译通过（bms.bin 生成）
+- 前端/后端部署通过（HTTP 200 返回新版本 app.js）
+- 设备断电后：
+  1. 前端秒级转离线（含顶部状态点/通信卡片/曲线灰线）
+  2. 企业微信推送通知
+
+=== 5. 后续建议 ===
+- 可增加 EMQX 监控线程 70s 兜底（已集成）
+- 建议用户设置 BMS_ALERT_ONLINE_NOTIFY=true（默认开启）
+
+---
+
+(注：该文档为任务 #5 中生成的新文档，替代了旧版。)

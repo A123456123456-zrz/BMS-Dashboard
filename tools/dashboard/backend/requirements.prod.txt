@@ -1,0 +1,12 @@
+# BMS Dashboard 生产依赖（2GiB 精简版）
+# 已剔除生产中未使用的 huaweicloudsdkcore / huaweicloudsdkiotda（iotda_client.py 用手工 HMAC 调 REST）
+# 注意：原 requirements.txt 漏写 requests，新服务器必须显式安装，否则 iotda_client 导入失败
+# 2026-08-14 重新加入 paho-mqtt：桥接进程 iotda_mqtt_bridge.py 需要(把 IoTDA 数据转发到自建 broker)
+
+flask==3.0.0
+flask-socketio==5.3.6
+eventlet==0.35.2
+python-engineio==4.9.0
+python-socketio==5.11.0
+requests
+paho-mqtt==2.1.0

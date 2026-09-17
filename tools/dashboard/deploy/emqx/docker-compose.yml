@@ -1,0 +1,41 @@
+# ====================================================================
+# BMS 自建 EMQX（2026-08-16，华为云为辅方案的主 broker）
+# --------------------------------------------------------------------
+# 架构: ESP32 第二通道(mTLS) ──8883──▶ EMQX ──订阅──▶ 后端 mqtt_client.py ──▶ 网页
+#        手机App(证书) ──8883──┘
+# 用途: 替代/升级 mosquitto 作为自建主 broker（华为云降级为灾备）
+#
+# 证书: 复用 deploy/mosquitto/certs/ 已生成的三套证书(ca/server/client)
+# 端口: 1884 内部明文(宿主,避开同事共用 1883) / 8883 mTLS / 18083 EMQX Dashboard(管理面板)
+# 登录: Dashboard 默认 admin/public(首次进入请改密)
+# ====================================================================
+services:
+  emqx:
+    image: emqx/emqx:5.8
+    container_name: bms-emqx
+    restart: unless-stopped
+    ports:
+      - "1884:1883"             # MQTT 明文(宿主1884→容器1883, 后端消费/本地调试; 不占同事1883)
+      - "8883:8883"             # MQTT mTLS 双向证书(设备第二通道 + App)
+      - "8083:8083"             # MQTT over WebSocket(经 cloudflared HTTPS 隧道对外, 免费版隧道不支持 TCP 直连)
+      - "18083:18083"           # EMQX Dashboard 管理面板
+    environment:
+      - EMQX_NODE_NAME=bms-emqx@127.0.0.1
+      - EMQX_DASHBOARD__DEFAULT_USERNAME=admin      # 面板账号(请改)
+      - EMQX_DASHBOARD__DEFAULT_PASSWORD=public     # 面板密码(请改)
+      - EMQX_LISTENERS__WSS__DEFAULT__ENABLE=false  # 禁用默认 WSS 监听器(8084, 无证书避免启动失败)
+    volumes:
+      - ./emqx.conf:/opt/emqx/etc/emqx.conf:ro      # 主配置(mTLS/认证/ACL)
+      - ./acl.conf:/opt/emqx/etc/acl.conf:ro        # 文件 ACL 规则
+      - ../mosquitto/certs:/opt/emqx/etc/certs:ro   # 复用现有证书(ca/server/client)
+      - ./data:/opt/emqx/data                       # 持久化(认证用户/会话)
+      - ./log:/opt/emqx/log                         # 日志
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+networks:
+  default:
+    name: bms-net

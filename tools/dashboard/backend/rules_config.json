@@ -1,0 +1,8 @@
+{
+  "enabled": true,
+  "low_soc": 15,
+  "overvolt": true,
+  "temp_prot": true,
+  "protect": true,
+  "debounce_s": 300
+}

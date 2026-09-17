@@ -1,0 +1,17 @@
+# mosquitto ACL —— BMS 双通道架构 (2026-08-16)
+# 规则: student 用户只能订阅 bms/# 遥测/事件/状态/回执, 不能发布(防止伪造数据/命令)
+# 语法: mosquitto.conf 中 acl_file /mosquitto/config/acl
+# 说明: 固件第二通道(mqtt2_user)连接后发布 bms/<device_id>/telemetry 需要"写"权限,
+#       因此 bms 账号权限: 读写 bms/#; 其余账号只读。
+# ============================================================
+
+# 默认拒绝(未匹配任何规则的用户/主题一律拒绝)
+acl_file_deny_all true
+
+# student 账号: 读写 bms/# (双通道固件上报 + 后端/App 订阅)
+user student
+topic readwrite bms/#
+
+# 其他账号(如有): 只读 bms/# (仅消费, 不可发布)
+# user viewer
+# topic read bms/#

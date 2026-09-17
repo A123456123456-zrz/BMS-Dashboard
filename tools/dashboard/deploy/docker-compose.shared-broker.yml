@@ -1,0 +1,55 @@
+# BMS Dashboard 部署(共用服务器版)
+# 适用: 服务器 1883 端口已有(同事的)MQTT broker, 复用该 broker, 不再部署自己的 mosquitto
+# 用法(在 tools/dashboard/ 目录执行):
+#   docker compose -f deploy/docker-compose.shared-broker.yml up -d --build
+#
+# 架构:
+#   ESP32 → 华为云IoTDA → [bms-bridge拉取] → 服务器已有 broker(:1883, bms主题) → 手机App订阅
+#                                   ↓
+#                           [bms-dashboard:5000] → cloudflared 隧道 → 浏览器
+#
+# 主题隔离: 桥接只写入 bms / bms/<device_id>/data 主题, 与同事的其他主题互不影响
+
+services:
+  # ===== 1) BMS 仪表盘(Flask + SocketIO) =====
+  bms-dashboard:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: bms-dashboard:latest
+    container_name: bms-dashboard
+    restart: unless-stopped
+    ports:
+      - "5000:5000"            # cloudflared config.yml 指向 127.0.0.1:5000
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ../backend/dashboard.env:/app/backend/dashboard.env:ro
+      - ../backend/.secret_key:/app/backend/.secret_key:ro
+      - ../backend/bms_history.db:/app/backend/bms_history.db
+
+  # ===== 2) IoTDA → MQTT 桥接进程(连服务器已有的共用 broker) =====
+  bms-bridge:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: bms-dashboard:latest
+    container_name: bms-bridge
+    restart: unless-stopped
+    network_mode: host         # 直连宿主机 127.0.0.1:1883(同事的 broker)
+    environment:
+      - TZ=Asia/Shanghai
+      - BMS_BRIDGE_MQTT_HOST=127.0.0.1
+      - BMS_BRIDGE_MQTT_PORT=1883
+      - BMS_BRIDGE_MQTT_USER=student
+      - BMS_BRIDGE_MQTT_PASS=${BMS_MQTT_PASS:-<BROKER_PASSWORD>}
+      - BMS_BRIDGE_TOPIC=bms
+      - BMS_BRIDGE_INTERVAL=10
+    volumes:
+      - ../backend/dashboard.env:/app/backend/dashboard.env:ro
+      - ../backend/.secret_key:/app/backend/.secret_key:ro
+    command: ["python", "iotda_mqtt_bridge.py"]
+
+networks:
+  default:
+    name: bms-net

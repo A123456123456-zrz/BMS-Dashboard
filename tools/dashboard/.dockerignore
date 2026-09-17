@@ -1,0 +1,10 @@
+# 这些文件不进镜像(避免把密钥/数据库烘焙进层)
+backend/dashboard.env
+backend/.secret_key
+backend/bms_history.db
+backend/.bms_dashboard.lock
+backend/__pycache__/
+__pycache__/
+*.pyc
+*.log
+.git/

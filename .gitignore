@@ -1,0 +1,118 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Directory metadata
+.directory
+
+# Temporary files
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Log files
+*.log
+
+# Build artifacts and directories
+**/build/
+build/
+*.o
+*.a
+*.out
+*.exe # For any host-side utilities compiled on Windows
+
+# ESP-IDF specific build outputs
+*.bin
+*.elf
+*.map
+flasher_args.json # Generated in build directory
+sdkconfig.old
+sdkconfig
+
+# ESP-IDF dependencies
+# For older versions or manual component management
+/components/.idf/
+**/components/.idf/
+# For modern ESP-IDF component manager
+managed_components/
+# If ESP-IDF tools are installed/referenced locally to the project
+.espressif/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+
+# Python environment files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.egg-info/
+dist/
+
+# Virtual environment folders
+venv/
+.venv/
+env/
+
+# Language Servers
+.clangd/
+.ccls-cache/
+compile_commands.json
+
+# Windows specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# User-specific configuration files
+*.user
+*.workspace # General workspace files, can be from various tools
+*.suo       # Visual Studio Solution User Options
+*.sln.docstates # Visual Studio
+
+# Dashboard 本地凭据(不入库)
+dashboard.env
+
+# 运行时密钥 / 数据库 / 备份(不入库)
+.secret_key
+**/.secret_key
+*.db
+*.sqlite
+backups/
+
+# WorkBuddy 工具数据(不入库)
+.workbuddy/
+
+# Cloudflare 隧道凭据与配置(含 TunnelSecret, 不入库!)
+tools/dashboard/tunnel/27c0e102-74d6-4b5b-91cd-50b021f09ba4.json
+tools/dashboard/tunnel/config.yml
+cloudflared.exe
+**/cloudflared.exe
+
+# 运行时备份(不入库)
+**/backups/
+*.db.gz
+
+# 个人文件(不入库)
+
+.trae-html-share-packages/
+
+# 临时/生成物(不入库)
+tools/dashboard.tar.gz
+components/bms_middleware/_check*.pem
+components/bms_middleware/_v.pem
+tools/dashboard/.bms_dashboard.lock
+*.lock
+
+# 客户端私钥(敏感, 不入库; 证书/CA 头文件可入库)
+components/bms_config/include/mqtt2_client_key.h
+
+# 2026-09-17 安全: 私钥一律不入库(证书 .crt 可公开)
+tools/dashboard/deploy/mosquitto/certs/*.key

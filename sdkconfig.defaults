@@ -1,0 +1,59 @@
+# ============================================================
+# BMS project sdkconfig.defaults
+# Purpose: auto-applied on first configure (idf.py reconfigure)
+#          avoids manual menuconfig; existing sdkconfig unaffected
+# Hardware: ESP32-S3 N16R8, 16MB Flash + 8MB PSRAM
+# ============================================================
+
+# ---- Flash size (16MB, N16 variant) ----
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="16MB"
+
+# ---- Partition table: custom partitions.csv (OTA A/B + NVS + coredump) ----
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_PARTITION_TABLE_FILENAME="partitions.csv"
+
+# ---- OTA rollback support (new firmware must confirm, else rollback) ----
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
+
+# ---- PSRAM (ESP32-S3 N16R8, 8MB PSRAM) ----
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_TYPE_AUTO=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_BOOT_INIT=y
+CONFIG_SPIRAM_USE_MALLOC=y
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=16384
+
+# ---- FreeRTOS watchdog (task-level monitoring) ----
+CONFIG_ESP_TASK_WDT=y
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=10
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0=y
+CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1=y
+
+# ---- WiFi/MQTT (enabled at runtime on demand) ----
+CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM=16
+CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM=64
+CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM=64
+
+# ---- FATFS (SD card blackbox, long filename + UTF-8) ----
+CONFIG_FATFS_CODEPAGE=936
+CONFIG_FATFS_LFN_HEAP=y
+CONFIG_FATFS_MAX_LFN=255
+
+# ---- Log level (INFO for debug, change to WARNING for release) ----
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+CONFIG_LOG_MAXIMUM_LEVEL_DEBUG=y
+
+# ---- Coredump (crash dump to flash, for post-mortem analysis) ----
+CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH=y
+CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF=y
+
+# ---- HTTP Server (config portal: increase header/URI length to avoid "header fields are too long") ----
+CONFIG_HTTPD_MAX_REQ_HDR_LEN=1024
+CONFIG_HTTPD_MAX_URI_LEN=1024
+
+# ---- FreeRTOS stack overflow detection (Method 2: CANARY, default-on, explicitly locked; see quality-eval 09) ----
+CONFIG_FREERTOS_CHECK_STACKOVERFLOW_CANARY=y
+# ---- FreeRTOS trace facility: app_dump_task_stack_watermarks() in app_tasks.c depends on uxTaskGetSystemState ----
+CONFIG_FREERTOS_USE_TRACE_FACILITY=y
