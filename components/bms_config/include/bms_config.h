@@ -373,7 +373,7 @@
 #define BMS_MQTT_URI                "mqtts://6a3ff62aab.iotda-device.cn-south-4.myhuaweicloud.com:8883"
 #define BMS_MQTT_CLIENT_ID          "<IOTDA_DEVICE_ID>_BMS001"  // 设备ID
 #define BMS_MQTT_USER               "<IOTDA_DEVICE_ID>_BMS001"  // 用户名(同设备ID)
-#define BMS_MQTT_DEVICE_SECRET      "164db82cacf6c49c0109"                       // 设备密钥(华为云 IoTDA 控制台实际密钥, 配网门户可覆盖写入NVS)
+#define BMS_MQTT_DEVICE_SECRET      "<IOTDA_DEVICE_SECRET>"                       // 设备密钥(华为云 IoTDA 控制台实际密钥, 配网门户可覆盖写入NVS)
 #define BMS_MQTT_PASS               ""                                  // 动态生成,此处留空
 #define BMS_MQTT_TOPIC_PREFIX       "$oc/devices/"                      // Topic前缀(IoTDA 格式)
 #define BMS_MQTT_TOPIC_DATA         "properties/report"                 // 属性上报

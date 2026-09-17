@@ -43,7 +43,7 @@ except ImportError:
 # 默认值与固件 bms_config.h 保持同步(可用 --uri/--client-id/--secret 覆盖)
 DEFAULT_URI = "mqtts://6a3ff62aab.iotda-device.cn-south-4.myhuaweicloud.com:8883"
 DEFAULT_CLIENT_ID = "<IOTDA_DEVICE_ID>_BMS001"
-DEFAULT_SECRET = "164db82cacf6c49c0109"
+DEFAULT_SECRET = "<IOTDA_DEVICE_SECRET>"
 
 
 # ---------------------------------------------------------------
